@@ -1,0 +1,36 @@
+name: 'Push News'
+
+on:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: '0 */3 * * *'
+  watch:
+    types: [started]
+
+env:
+  TZ: Asia/Shanghai
+
+jobs:
+  Gitfolio-Spider:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: 'Set up Python'
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: 'Install dependencies'
+        run: python -m pip install --upgrade pip
+      - name: 'Install requirements'
+        run: pip install -r ./requirements.txt
+      - name: 'Working'
+        env:
+          SECRET: ${{ secrets.SECRET }}
+        timeout-minutes: 350
+        run: |
+          echo SECRET=$SECRET > .env
+          python main.py
+          rm -f .env

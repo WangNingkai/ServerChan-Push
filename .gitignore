@@ -1,0 +1,5 @@
+# Editor files and folders
+.vscode/
+.idea/
+# env file
+.env

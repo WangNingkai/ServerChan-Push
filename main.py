@@ -51,7 +51,8 @@ TIMEOUT = 5
 class Action:
     def __init__(self):
         load_dotenv(find_dotenv(), override=True)
-        self.secret = os.environ.get('SECRET')
+        self.hook = os.environ.get('WEBHOOK', '')
+        self.secret = os.environ.get('SECRET', '')
         self.contents = []
         self.res = False
 
@@ -76,7 +77,7 @@ class Action:
 
     """ 企业微信机器人推送 """
 
-    """ def wechat(self):
+    def wechat(self):
         data = {
             'msgtype': 'markdown',
             'markdown': {
@@ -90,7 +91,7 @@ class Action:
             self.res = resp.json()['errcode'] == 0
             print(resp.text)
         except Exception as e:
-            print(f'something error occurred, message: {e}') """
+            print(f'something error occurred, message: {e}')
 
     @staticmethod
     def get_v2ex_hot_topics():
@@ -179,7 +180,7 @@ class Action:
 
     @staticmethod
     def get_github_trend():
-        url = "https://trendings.herokuapp.com/repo"
+        url = "https://github-trending.vercel.app/repo"
         headers = {'User-Agent': random.choice(USER_AGENTS)}
         contents = []
         try:
@@ -207,10 +208,12 @@ class Action:
         v2ex_contents.insert(0, f'\n> v2ex热门主题\n\n')
         github_contents = Action.get_github_trend()[:10]
         github_contents.insert(0, f'\n> github热榜\n\n')
-        self.contents = weibo_contents+zhihu_contents + \
-            douban_contents+v2ex_contents+github_contents
+        self.contents = weibo_contents + zhihu_contents + \
+            douban_contents + v2ex_contents + github_contents
         self.servechan()
-        # print(f'{"".join(self.contents)}')
+        # self.contents = weibo_contents
+        # self.wechat()
+        print(f'{"".join(self.contents)}')
 
 
 if __name__ == '__main__':

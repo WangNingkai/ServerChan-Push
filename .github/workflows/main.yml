@@ -1,4 +1,4 @@
-name: 'Push News'
+name: 'ServerChan Push News'
 
 on:
   push:
@@ -13,7 +13,7 @@ env:
   TZ: Asia/Shanghai
 
 jobs:
-  Gitfolio-Spider:
+  ServerChan-Push-News:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

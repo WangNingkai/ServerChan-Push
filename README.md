@@ -53,7 +53,7 @@ jobs:
 
 - cron 是 UTC 时间，使用时请将北京时间转换为 UTC 进行配置。
 - 请在项目的 Settings -> Secrets 路径下配置好SECRET(server酱密钥)，不要直接在 .yml 文件中暴露地址跟密钥
-- SECRET 设置为 `SECRET=xxxxxx`
+- SECRET 设置为 `xxxxxx`
 
 ### 效果
 

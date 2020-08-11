@@ -49,16 +49,15 @@ TIMEOUT = 5
 
 
 class Action:
-    """V2EX Action"""
-
     def __init__(self):
         load_dotenv(find_dotenv(), override=True)
         self.secret = os.environ.get('SECRET')
         self.contents = []
         self.res = False
 
+    """ Server酱推送 """
+
     def servechan(self):
-        """调用serverchan接口"""
         dt = datetime.now()
         time = dt.strftime('%Y-%m-%d')
         url = f'https://sc.ftqq.com/{self.secret}.send'
@@ -74,6 +73,24 @@ class Action:
             print(resp.text)
         except Exception as e:
             print(f'something error occurred, message: {e}')
+
+    """ 企业微信机器人推送 """
+
+    """ def wechat(self):
+        data = {
+            'msgtype': 'markdown',
+            'markdown': {
+                'content': f'{"".join(self.contents[:11])}'
+            }
+        }
+        headers = {'Content-Type': 'application/json'}
+        try:
+            resp = requests.post(self.hook, headers=headers,
+                                 data=json.dumps(data), timeout=TIMEOUT)
+            self.res = resp.json()['errcode'] == 0
+            print(resp.text)
+        except Exception as e:
+            print(f'something error occurred, message: {e}') """
 
     @staticmethod
     def get_v2ex_hot_topics():
@@ -138,15 +155,60 @@ class Action:
             print(f'something error occurred, message: {e}')
         return []
 
+    @staticmethod
+    def get_douban_hot_topics():
+        url = "https://bicido.com/api/news/?type_id=5"
+        headers = {
+            'Referer': 'https://bicido.com/',
+            'Host': 'bicido.com',
+            'User-Agent': random.choice(USER_AGENTS)
+        }
+        contents = []
+        try:
+            resp = requests.get(url, headers=headers, timeout=TIMEOUT)
+            json_data = json.loads(resp.text)
+            for item in json_data:
+                detail_url = item['source_url']
+                title = item['title']
+                content = f'- [{title}]({detail_url})\n'
+                contents.append(content)
+            return contents
+        except Exception as e:
+            print(f'something error occurred, message: {e}')
+        return []
+
+    @staticmethod
+    def get_github_trend():
+        url = "https://trendings.herokuapp.com/repo"
+        headers = {'User-Agent': random.choice(USER_AGENTS)}
+        contents = []
+        try:
+            resp = requests.get(url, headers=headers, timeout=TIMEOUT)
+            json_data = resp.json()['items']
+            for item in json_data:
+                detail_url = item['repo_link']
+                title = item['repo']
+                content = f'- [{title}]({detail_url})\n'
+                contents.append(content)
+            return contents
+        except Exception as e:
+            print(f'something error occurred, message: {e}')
+        return []
+
     def run(self):
         """主方法"""
-        weibo_contents = Action.get_weibo_hot_topics()
-        weibo_contents.insert(0, f'\n> 微博热搜\n\n')
-        zhihu_contents = Action.get_zhihu_hot_topics()
-        zhihu_contents.insert(0, f'\n> 知乎热榜\n\n')
-        v2ex_contents = Action.get_v2ex_hot_topics()
-        v2ex_contents.insert(0, f'\n> v2ex热搜\n\n')
-        self.contents = weibo_contents+zhihu_contents+v2ex_contents
+        weibo_contents = Action.get_weibo_hot_topics()[:10]
+        weibo_contents.insert(0, f'\n> 微博热搜榜\n\n')
+        zhihu_contents = Action.get_zhihu_hot_topics()[:10]
+        zhihu_contents.insert(0, f'\n> 知乎热搜\n\n')
+        douban_contents = Action.get_douban_hot_topics()[:10]
+        douban_contents.insert(0, f'\n> 豆瓣话题\n\n')
+        v2ex_contents = Action.get_v2ex_hot_topics()[:10]
+        v2ex_contents.insert(0, f'\n> v2ex热门主题\n\n')
+        github_contents = Action.get_github_trend()[:10]
+        github_contents.insert(0, f'\n> github热榜\n\n')
+        self.contents = weibo_contents+zhihu_contents + \
+            douban_contents+v2ex_contents+github_contents
         self.servechan()
         # print(f'{"".join(self.contents)}')
 

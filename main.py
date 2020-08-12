@@ -78,20 +78,21 @@ class Action:
     """ 企业微信机器人推送 """
 
     def wechat(self):
-        data = {
-            'msgtype': 'markdown',
-            'markdown': {
-                'content': f'{"".join(self.contents[:11])}'
+        if self.hook :
+            data = {
+                'msgtype': 'markdown',
+                'markdown': {
+                    'content': f'{"".join(self.contents[:11])}'
+                }
             }
-        }
-        headers = {'Content-Type': 'application/json'}
-        try:
-            resp = requests.post(self.hook, headers=headers,
+            headers = {'Content-Type': 'application/json'}
+            try:
+                resp = requests.post(self.hook, headers=headers,
                                  data=json.dumps(data), timeout=TIMEOUT)
-            self.res = resp.json()['errcode'] == 0
-            print(resp.text)
-        except Exception as e:
-            print(f'something error occurred, message: {e}')
+                self.res = resp.json()['errcode'] == 0
+                print(resp.text)
+            except Exception as e:
+                print(f'something error occurred, message: {e}')
 
     @staticmethod
     def get_v2ex_hot_topics():
@@ -220,7 +221,7 @@ class Action:
         self.wechat()
         self.contents = weibo_contents + zhihu_contents + \
             douban_contents + v2ex_contents + github_contents
-        self.servechan()
+        # self.servechan()
         # print(f'{"".join(self.contents)}')
 
 

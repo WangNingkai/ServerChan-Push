@@ -200,20 +200,28 @@ class Action:
         """主方法"""
         weibo_contents = Action.get_weibo_hot_topics()[:10]
         weibo_contents.insert(0, f'\n> 微博热搜榜\n\n')
+        self.contents = weibo_contents
+        self.wechat()
         zhihu_contents = Action.get_zhihu_hot_topics()[:10]
         zhihu_contents.insert(0, f'\n> 知乎热搜\n\n')
+        self.contents = zhihu_contents
+        self.wechat()
         douban_contents = Action.get_douban_hot_topics()[:10]
         douban_contents.insert(0, f'\n> 豆瓣话题\n\n')
+        self.contents = douban_contents
+        self.wechat()
         v2ex_contents = Action.get_v2ex_hot_topics()[:10]
         v2ex_contents.insert(0, f'\n> v2ex热门主题\n\n')
+        self.contents = v2ex_contents
+        self.wechat()
         github_contents = Action.get_github_trend()[:10]
         github_contents.insert(0, f'\n> github热榜\n\n')
+        self.contents = github_contents
+        self.wechat()
         self.contents = weibo_contents + zhihu_contents + \
             douban_contents + v2ex_contents + github_contents
         self.servechan()
-        # self.contents = weibo_contents
-        # self.wechat()
-        print(f'{"".join(self.contents)}')
+        # print(f'{"".join(self.contents)}')
 
 
 if __name__ == '__main__':

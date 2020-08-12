@@ -221,7 +221,7 @@ class Action:
         self.wechat()
         self.contents = weibo_contents + zhihu_contents + \
             douban_contents + v2ex_contents + github_contents
-        # self.servechan()
+        self.servechan()
         # print(f'{"".join(self.contents)}')
 
 

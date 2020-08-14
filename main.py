@@ -1,10 +1,10 @@
-import json
+import asyncio
 import os
 import random
 from datetime import datetime
 from urllib import parse
 
-import requests
+import httpx
 from dotenv import find_dotenv, load_dotenv
 
 USER_AGENTS = [
@@ -51,14 +51,12 @@ TIMEOUT = 5
 class Action:
     def __init__(self):
         load_dotenv(find_dotenv(), override=True)
-        self.hook = os.environ.get('WEBHOOK', '')
         self.secret = os.environ.get('SECRET', '')
         self.contents = []
         self.res = False
 
-    """ Server酱推送 """
-
-    def servechan(self):
+    async def servechan(self):
+        """ Server酱推送 """
         dt = datetime.now()
         time = dt.strftime('%Y-%m-%d')
         url = f'https://sc.ftqq.com/{self.secret}.send'
@@ -68,163 +66,131 @@ class Action:
         }
         headers = {'Content-Type': 'application/x-www-form-urlencoded'}
         try:
-            resp = requests.post(url, headers=headers,
+            resp = await self.client.post(url, headers=headers,
                                  data=parse.urlencode(data), timeout=TIMEOUT)
             self.res = resp.json()['errno'] == 0
             print(resp.text)
         except Exception as e:
             print(f'something error occurred, message: {e}')
 
-    """ 企业微信机器人推送 """
-
-    def wechat(self):
-        if self.hook :
-            data = {
-                'msgtype': 'markdown',
-                'markdown': {
-                    'content': f'{"".join(self.contents[:11])}'
-                }
-            }
-            headers = {'Content-Type': 'application/json'}
-            try:
-                resp = requests.post(self.hook, headers=headers,
-                                 data=json.dumps(data), timeout=TIMEOUT)
-                self.res = resp.json()['errcode'] == 0
-                print(resp.text)
-            except Exception as e:
-                print(f'something error occurred, message: {e}')
-
-    @staticmethod
-    def get_v2ex_hot_topics():
-        """获取V站热门主题"""
+    async def get_v2ex_hot_topics(self):
         url = 'https://www.v2ex.com/api/topics/hot.json'
         headers = {'User-Agent': random.choice(USER_AGENTS)}
-        contents = []
         try:
-            resp = requests.get(url, headers=headers, timeout=TIMEOUT)
-            json_data = json.loads(resp.text)
-            for item in json_data:
+            resp = await self.client.get(url, headers=headers, timeout=TIMEOUT)
+            self.contents.append(f'\n> v2ex热门主题\n\n')
+            for item in resp.json()[:10]:
                 detail_url = item['url']
                 title = item['title']
                 content = f'- [{title}]({detail_url})\n'
-                contents.append(content)
-            return contents
+                self.contents.append(content)
         except Exception as e:
             print(f'something error occurred, message: {e}')
-        return []
 
-    @staticmethod
-    def get_zhihu_hot_topics():
+    async def get_zhihu_hot_topics(self):
         url = "https://bicido.com/api/news/?type_id=4"
         headers = {
             'Referer': 'https://bicido.com/',
             'Host': 'bicido.com',
             'User-Agent': random.choice(USER_AGENTS)
         }
-        contents = []
         try:
-            resp = requests.get(url, headers=headers, timeout=TIMEOUT)
-            json_data = json.loads(resp.text)
-            for item in json_data:
+            resp = await self.client.get(url, headers=headers, timeout=TIMEOUT)
+            self.contents.append(f'\n> 知乎热搜\n\n')
+            for item in resp.json()[:10]:
                 detail_url = item['source_url']
                 title = item['title']
                 content = f'- [{title}]({detail_url})\n'
-                contents.append(content)
-            return contents
+                self.contents.append(content)
         except Exception as e:
             print(f'something error occurred, message: {e}')
-        return []
 
-    @staticmethod
-    def get_weibo_hot_topics():
+    async def get_weibo_hot_search(self):
         url = "https://bicido.com/api/news/?type_id=1"
         headers = {
             'Referer': 'https://bicido.com/',
             'Host': 'bicido.com',
             'User-Agent': random.choice(USER_AGENTS)
         }
-        contents = []
         try:
-            resp = requests.get(url, headers=headers, timeout=TIMEOUT)
-            json_data = json.loads(resp.text)
-            for item in json_data:
+            resp = await self.client.get(url, headers=headers, timeout=TIMEOUT)
+            self.contents.append(f'\n> 微博热搜榜\n\n')
+            for item in resp.json()[:10]:
                 detail_url = item['source_url']
                 title = item['title']
                 content = f'- [{title}]({detail_url})\n'
-                contents.append(content)
-            return contents
+                self.contents.append(content)
         except Exception as e:
             print(f'something error occurred, message: {e}')
-        return []
 
-    @staticmethod
-    def get_douban_hot_topics():
+    async def get_weibo_hot_topics(self):
+        url = "https://bicido.com/api/news/?type_id=2"
+        headers = {
+            'Referer': 'https://bicido.com/',
+            'Host': 'bicido.com',
+            'User-Agent': random.choice(USER_AGENTS)
+        }
+        try:
+            resp = await self.client.get(url, headers=headers, timeout=TIMEOUT)
+            self.contents.append(f'\n> 微博话题榜\n\n')
+            for item in resp.json()[:10]:
+                detail_url = item['source_url']
+                title = item['title']
+                content = f'- [{title}]({detail_url})\n'
+                self.contents.append(content)
+        except Exception as e:
+            print(f'something error occurred, message: {e}')
+
+    async def get_douban_hot_topics(self):
         url = "https://bicido.com/api/news/?type_id=5"
         headers = {
             'Referer': 'https://bicido.com/',
             'Host': 'bicido.com',
             'User-Agent': random.choice(USER_AGENTS)
         }
-        contents = []
         try:
-            resp = requests.get(url, headers=headers, timeout=TIMEOUT)
-            json_data = json.loads(resp.text)
-            for item in json_data:
+            resp = await self.client.get(url, headers=headers, timeout=TIMEOUT)
+            self.contents.append(f'\n> 豆瓣话题\n\n')
+            for item in resp.json()[:10]:
                 detail_url = item['source_url']
                 title = item['title']
                 content = f'- [{title}]({detail_url})\n'
-                contents.append(content)
-            return contents
+                self.contents.append(content)
         except Exception as e:
             print(f'something error occurred, message: {e}')
-        return []
 
-    @staticmethod
-    def get_github_trend():
+    async def get_github_trend(self):
         url = "https://github-trending.vercel.app/repo"
         headers = {'User-Agent': random.choice(USER_AGENTS)}
-        contents = []
         try:
-            resp = requests.get(url, headers=headers, timeout=TIMEOUT)
-            json_data = resp.json()['items']
-            for item in json_data:
+            resp = await self.client.get(url, headers=headers, timeout=TIMEOUT)
+            self.contents.append(f'\n> github热榜\n\n')
+            for item in resp.json()['items'][:10]:
                 detail_url = item['repo_link']
                 title = item['repo']
                 content = f'- [{title}]({detail_url})\n'
-                contents.append(content)
-            return contents
+                self.contents.append(content)
         except Exception as e:
             print(f'something error occurred, message: {e}')
-        return []
 
-    def run(self):
+    async def run(self):
         """主方法"""
-        weibo_contents = Action.get_weibo_hot_topics()[:10]
-        weibo_contents.insert(0, f'\n> 微博热搜榜\n\n')
-        self.contents = weibo_contents
-        self.wechat()
-        zhihu_contents = Action.get_zhihu_hot_topics()[:10]
-        zhihu_contents.insert(0, f'\n> 知乎热搜\n\n')
-        self.contents = zhihu_contents
-        self.wechat()
-        douban_contents = Action.get_douban_hot_topics()[:10]
-        douban_contents.insert(0, f'\n> 豆瓣话题\n\n')
-        self.contents = douban_contents
-        self.wechat()
-        v2ex_contents = Action.get_v2ex_hot_topics()[:10]
-        v2ex_contents.insert(0, f'\n> v2ex热门主题\n\n')
-        self.contents = v2ex_contents
-        self.wechat()
-        github_contents = Action.get_github_trend()[:10]
-        github_contents.insert(0, f'\n> github热榜\n\n')
-        self.contents = github_contents
-        self.wechat()
-        self.contents = weibo_contents + zhihu_contents + \
-            douban_contents + v2ex_contents + github_contents
-        self.servechan()
-        # print(f'{"".join(self.contents)}')
+        async with httpx.AsyncClient() as client:
+            self.client = client
+            task_list = []
+            task_list.append(asyncio.create_task(self.get_weibo_hot_topics()))
+            task_list.append(asyncio.create_task(self.get_weibo_hot_search()))
+            task_list.append(asyncio.create_task(self.get_zhihu_hot_topics()))
+            task_list.append(asyncio.create_task(self.get_douban_hot_topics()))
+            task_list.append(asyncio.create_task(self.get_v2ex_hot_topics()))
+            task_list.append(asyncio.create_task(self.get_github_trend()))
+            
+            await asyncio.gather(*task_list)
+            await self.servechan()
+            # print(f'{"".join(self.contents)}')
 
 
 if __name__ == '__main__':
     action = Action()
-    action.run()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(action.run())

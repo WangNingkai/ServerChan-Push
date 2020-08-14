@@ -54,6 +54,7 @@ class Action:
         self.secret = os.environ.get('SECRET', '')
         self.contents = []
         self.res = False
+        self.task_list = []
 
     async def servechan(self):
         """ Server酱推送 """
@@ -177,15 +178,14 @@ class Action:
         """主方法"""
         async with httpx.AsyncClient() as client:
             self.client = client
-            task_list = []
-            task_list.append(asyncio.create_task(self.get_weibo_hot_topics()))
-            task_list.append(asyncio.create_task(self.get_weibo_hot_search()))
-            task_list.append(asyncio.create_task(self.get_zhihu_hot_topics()))
-            task_list.append(asyncio.create_task(self.get_douban_hot_topics()))
-            task_list.append(asyncio.create_task(self.get_v2ex_hot_topics()))
-            task_list.append(asyncio.create_task(self.get_github_trend()))
+            self.task_list.append(asyncio.create_task(self.get_weibo_hot_topics()))
+            self.task_list.append(asyncio.create_task(self.get_weibo_hot_search()))
+            self.task_list.append(asyncio.create_task(self.get_zhihu_hot_topics()))
+            self.task_list.append(asyncio.create_task(self.get_douban_hot_topics()))
+            self.task_list.append(asyncio.create_task(self.get_v2ex_hot_topics()))
+            self.task_list.append(asyncio.create_task(self.get_github_trend()))
             
-            await asyncio.gather(*task_list)
+            await asyncio.gather(*self.task_list)
             await self.servechan()
             # print(f'{"".join(self.contents)}')
 

@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import random
 from datetime import datetime
@@ -68,7 +69,7 @@ class Action:
         headers = {'Content-Type': 'application/x-www-form-urlencoded'}
         try:
             resp = await self.client.post(url, headers=headers,
-                                 data=parse.urlencode(data), timeout=TIMEOUT)
+                                          data=parse.urlencode(data), timeout=TIMEOUT)
             self.res = resp.json()['errno'] == 0
             print(resp.text)
         except Exception as e:
@@ -174,6 +175,25 @@ class Action:
         except Exception as e:
             print(f'something error occurred, message: {e}')
 
+    async def get_fish_trend(self):
+        url = "https://www.tophub.fun:8888/GetAllInfoGzip?id=1006"
+        headers = {
+            'Referer': 'https://mo.fish/',
+            'Origin': 'https://mo.fish',
+            'User-Agent': random.choice(USER_AGENTS)
+        }
+        try:
+            resp = await self.client.get(url, headers=headers, timeout=TIMEOUT)
+            self.contents.append(f'\n> 鱼塘热榜\n\n')
+            for item in resp.json()['Data']:
+                detail_url = item['Url']
+                title = item['Title']
+                type = item['type']
+                content = f'- [{title}]({detail_url}) [{type}]\n'
+                self.contents.append(content)
+        except Exception as e:
+            print(f'something error occurred, message: {e}')
+
     async def run(self):
         """主方法"""
         async with httpx.AsyncClient() as client:
@@ -184,7 +204,8 @@ class Action:
             self.task_list.append(asyncio.create_task(self.get_douban_hot_topics()))
             self.task_list.append(asyncio.create_task(self.get_v2ex_hot_topics()))
             self.task_list.append(asyncio.create_task(self.get_github_trend()))
-            
+            self.task_list.append(asyncio.create_task(self.get_fish_trend()))
+
             await asyncio.gather(*self.task_list)
             await self.servechan()
             # print(f'{"".join(self.contents)}')
